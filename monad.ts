@@ -1,4 +1,4 @@
-interface M<T> {}
+export interface M<T> {}
 
 interface MUnit<T> {
   (x: T): M<T>;
@@ -12,14 +12,14 @@ interface MJoin<T> {
   (m: M<M<T>>): M<T>;
 }
 
-interface Monad<T> {
+export interface Monad<T> {
   unit: MUnit<T>;
-  map: MMap<T, T>;
+  map:  <B>(f: (a: T) => B, m: M<T>) => M<B>;
   join: MJoin<T>;
 }
 
 // The List Monad
-type List<T> = T[]; 
+export type List<T> = T[]; 
 
 interface ListMonad<T> extends Monad<T> {
   unit: (x: T) => List<T>;
