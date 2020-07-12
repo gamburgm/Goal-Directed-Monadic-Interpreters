@@ -20,14 +20,17 @@ export function interpret(prog: Program, monad: Monad<number>): M<number> {
 
 // Monad helpers
 function bind2(f: (a: number) => (b: number) => M<number>, ma: M<number>, mb: M<number>, monad: Monad<number>): M<number> {
-  return monad.join(monad.map((x) => monad.join(monad.map(f(x), mb)), ma));
+  return monad.join(
+    monad.map((x) => {
+      return monad.join(monad.map(f(x))(mb));
+    })(ma));
 }
 
 let MLeq = (monad: Monad<number>) => {
   return (i: number) => {
     return (j: number) => {
       if (i <= j) return monad.unit(j);
-      else       return empty();
+      else       return monad.empty();
     };
   };
 };
@@ -35,30 +38,8 @@ let MLeq = (monad: Monad<number>) => {
 let MTo = (monad: Monad<number>) => {
   return (i: number) => {
     return (j: number) => {
-      if (i > j) return empty();
-      else append(monad.unit(i))(MTo(monad)(i + 1)(j));
+      if (i > j) return monad.empty();
+      else monad.append(monad.unit(i))(MTo(monad)(i + 1)(j));
     };
   };
 };
-
-let append = (i: number[]) => (j: number[]): number[] => { return i.concat(j) };
-
-function leq(i: number, j: number, monad: Monad<number>): M<number> {
-  if (i <= j) return monad.unit(j);
-  else       return empty();
-}
-
-// TODO should probably be moved into the Monad construct
-function empty(): M<number> { return [] };
-
-
-/*
-function curry(f: Function): Function {
-  if (f.length === 0) return f;
-
-
-
-
-  return f.arguments.reduce
-}
-*/
