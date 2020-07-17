@@ -31,6 +31,6 @@ export interface If {
   kind: 'If',
   cond: Program,
   yes: Program,
-  No: Program,
+  no: Program,
 }
 

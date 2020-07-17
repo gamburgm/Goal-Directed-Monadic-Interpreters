@@ -1,4 +1,4 @@
-import { M, Monad } from './monad';
+import { M, Monad, listMonad } from './monad';
 import { Program, Int, To, Add, LT, If } from './types';
 
 export function interpret(prog: Program, monad: Monad<number>): M<number> {
@@ -11,9 +11,8 @@ export function interpret(prog: Program, monad: Monad<number>): M<number> {
   } else if (prog.kind === 'LT') {
     return bind2((x) => (y) => MLeq(monad)(x)(y), interpret(prog.lte, monad), interpret(prog.gte, monad), monad);
   } else if (prog.kind === 'If') {
-    return ifEmpty(interpret(prog.cond, monad))(interpret(prog.yes, monad))(interpret(prog.no, monad));
+    return monad.ifEmpty(interpret(prog.cond, monad))(interpret(prog.yes, monad))(interpret(prog.no, monad));
   }
-
 
   return [];
 }
@@ -30,7 +29,7 @@ let MLeq = (monad: Monad<number>) => {
   return (i: number) => {
     return (j: number) => {
       if (i <= j) return monad.unit(j);
-      else       return monad.empty();
+      else        return monad.empty();
     };
   };
 };
@@ -39,7 +38,30 @@ let MTo = (monad: Monad<number>) => {
   return (i: number) => {
     return (j: number) => {
       if (i > j) return monad.empty();
-      else monad.append(monad.unit(i))(MTo(monad)(i + 1)(j));
+      else return monad.append(monad.unit(i))(MTo(monad)(i + 1)(j));
     };
   };
 };
+
+console.log(interpret({
+  kind: 'If',
+  cond: {
+    kind: 'LT',
+    lte: {
+      kind: 'Int',
+      val: 10,
+    },
+    gte: {
+      kind: 'Int',
+      val: 0,
+    },
+  },
+  yes: {
+    kind: 'Int',
+    val: 1,
+  },
+  no: {
+    kind: 'Int',
+    val: 2,
+  },
+}, listMonad));
