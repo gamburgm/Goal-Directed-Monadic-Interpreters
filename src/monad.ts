@@ -63,6 +63,22 @@ export const listMonad: ListMonad<number> = {
   }
 }
 
+let x = [4, 5];
+
+let y = (_: any) => {
+  return [
+    4,
+    (_: any) => {
+      return [
+        5,
+        (_: any) => {
+          return [];
+        }
+      ];
+    }
+  ];
+}
+
 export type DelayedVal<T> = [T, Delay<T>] | [];
 export type Delay<T> = (_: any) => DelayedVal<T>;
 
@@ -72,7 +88,7 @@ export const emptyDelay: EmptyDelay = (_: any) => [];
 
 interface DelayMonad<T> extends Monad<T> {
   empty: () => EmptyDelay;
-  unit: (x: T) => (_: any) => T;
+  unit: (x: T) => Delay<T>;
   map: <B>(f: (a: T) => B) => (m: Delay<T>) => Delay<B>;
   join: (m: Delay<Delay<T>>) => Delay<T>;
   ifEmpty: (xs: Delay<T>) => (ys: Delay<T>) => (zs: Delay<T>) => Delay<T>;
@@ -89,7 +105,7 @@ function resolve<T>(v: Delay<T>): Array<T> {
 
 export const delayMonad: DelayMonad<number> = {
   empty: () => emptyDelay,
-  unit: (x: number) => (_: any) => x,
+  unit: (x: number) => (_: any) => [x, emptyDelay],
   // Is there something wrong with this one?
   map: <B>(f: (a: number) => B) => (m: Delay<number>): Delay<B> => {
     let recur: Delay<number> = m;
@@ -128,6 +144,23 @@ export const delayMonad: DelayMonad<number> = {
         }
       ];
     }
+  },
+
+  append: (xs: Delay<number>) => (ys: Delay<number>): Delay<number> => {
+    let recur = xs;
+
+    let resolve = (_: any) => {
+      let val;
+      let res = recur(1);
+      if (res.length === 0) {
+        return ys(1);
+      }
+
+      [val, recur] = res;
+      return [val, resolve];
+    };
+
+    return resolve as Delay<number>;
   }
 
 }
