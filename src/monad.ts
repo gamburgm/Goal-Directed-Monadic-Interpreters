@@ -95,11 +95,12 @@ interface DelayMonad<T> extends Monad<T> {
   append: (xs: Delay<T>) => (ys: Delay<T>) => Delay<T>;
 }
 
-function resolve<T>(v: Delay<T>): Array<T> {
-  if (v.length === 0) {
+export function resolve<T>(v: Delay<T>): Array<T> {
+  let res: DelayedVal<T> = v(1);
+  if (res.length === 0) {
     return [];
   } else {
-    return [v[0]].concat(resolve(v[1](1)));
+    return [res[0]].concat(resolve(res[1]));
   }
 }
 
@@ -120,30 +121,38 @@ export const delayMonad: DelayMonad<number> = {
     return resolve as Delay<B>;
   },
   join: (m: Delay<Delay<number>>): Delay<number> => {
-    const res: DelayedVal<Delay<number>> = m(1);
-    if (res.length === 0) return emptyDelay;
+    let started = false;
+    let outerRecur = m;
+    let outerRes, innerRecur, innerRes, elem;
 
-    let [innerRecur, outerRecur] = res;
-    let innerRes: DelayedVal<number> = innerRecur(1);
-
-    while (innerRes.length === 0) {
-      let newRes: DelayedVal<Delay<number>> = outerRecur(1);
-      if (newRes.length === 0) return emptyDelay;
-      [innerRecur, outerRecur] = newRes;
+    let iterateOuter = () => {
+      outerRes = outerRecur(1);
+      if (outerRes.length === 0) return false;
+      [innerRecur, outerRecur] = outerRes;
       innerRes = innerRecur(1);
+      return true;
     }
 
-    let innerVal;
-    [innerVal, innerRecur] = innerRes;
-
-    return (_: any) => {
-      return [
-        innerVal,
-        (_: any) => {
-          
+    let resolve = (_: any) => {
+      if (!started) {
+        do {
+          if (!iterateOuter()) return outerRes;
+        } while (innerRes.length === 0);
+        started = true;
+      } else {
+        innerRes = innerRecur(1);
+        if (innerRes.length === 0) {
+          do {
+            if (!iterateOuter()) return outerRes;
+          } while (innerRes.length === 0);
         }
-      ];
-    }
+      }
+
+      [elem, innerRecur] = innerRes;
+      return [elem, resolve];
+    };
+
+    return resolve;
   },
 
   append: (xs: Delay<number>) => (ys: Delay<number>): Delay<number> => {
