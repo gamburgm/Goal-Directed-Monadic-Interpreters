@@ -107,7 +107,6 @@ export function resolve<T>(v: Delay<T>): Array<T> {
 export const delayMonad: DelayMonad<number> = {
   empty: () => emptyDelay,
   unit: (x: number) => (_: any) => [x, emptyDelay],
-  // Is there something wrong with this one?
   map: <B>(f: (a: number) => B) => (m: Delay<number>): Delay<B> => {
     let recur: Delay<number> = m;
     let resolve = (_: any) => {
@@ -155,6 +154,18 @@ export const delayMonad: DelayMonad<number> = {
     return resolve;
   },
 
+  ifEmpty: (xs: Delay<number>) => (ys: Delay<number>) => (zs: Delay<number>): Delay<number> => {
+    let resolve = (_: any) => {
+      let res: DelayedVal<number> = xs(1);
+      if (res.length === 0) {
+        return ys(1);
+      } else {
+        return zs(1);
+      }
+    };
+    return resolve;
+  },
+
   append: (xs: Delay<number>) => (ys: Delay<number>): Delay<number> => {
     let recur = xs;
 
@@ -171,10 +182,18 @@ export const delayMonad: DelayMonad<number> = {
 
     return resolve as Delay<number>;
   }
-
 }
 
 export type Kont<T> = (x: T) => T;
 
 interface KontMonad<T> extends Monad<T> {
+}
+
+interface DelayMonad<T> extends Monad<T> {
+  empty: () => EmptyDelay;
+  unit: (x: T) => Delay<T>;
+  map: <B>(f: (a: T) => B) => (m: Delay<T>) => Delay<B>;
+  join: (m: Delay<Delay<T>>) => Delay<T>;
+  ifEmpty: (xs: Delay<T>) => (ys: Delay<T>) => (zs: Delay<T>) => Delay<T>;
+  append: (xs: Delay<T>) => (ys: Delay<T>) => Delay<T>;
 }

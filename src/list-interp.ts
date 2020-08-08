@@ -1,4 +1,4 @@
-import { M, Monad, listMonad } from './monad';
+import { M, Monad, listMonad, delayMonad, resolve, Delay } from './monad';
 import { Program, Int, To, Add, LT, If } from './types';
 
 export function interpret(prog: Program, monad: Monad<number>): M<number> {
@@ -43,7 +43,12 @@ let MTo = (monad: Monad<number>) => {
   };
 };
 
-console.log(interpret({
+console.log(resolve(interpret({
+  kind: 'Int',
+  val: 10,
+}, delayMonad) as Delay<number>));
+
+console.log(resolve(interpret({
   kind: 'If',
   cond: {
     kind: 'LT',
@@ -64,4 +69,51 @@ console.log(interpret({
     kind: 'Int',
     val: 2,
   },
-}, listMonad));
+}, delayMonad) as Delay<number>));
+
+/*
+console.log(resolve(interpret({
+  kind: 'Add',
+  first: {
+    kind: 'To',
+    from: {
+      kind: 'Int',
+      val: 5,
+    },
+    to: {
+      kind: 'Int',
+      val: 10,
+    }
+  },
+  second: {
+    kind: 'Int',
+    val: 5
+  }
+}, delayMonad) as Delay<number>));
+*/
+
+console.log(resolve(interpret({
+  kind: 'Add',
+  first: {
+    kind: 'To',
+    from: {
+      kind: 'Int',
+      val: 1,
+    },
+    to: {
+      kind: 'Int',
+      val: 2,
+    },
+  },
+  second: {
+    kind: 'To',
+    from: {
+      kind: 'Int',
+      val: 5,
+    },
+    to: {
+      kind: 'Int',
+      val: 10,
+    },
+  },
+}, delayMonad) as Delay<number>));
