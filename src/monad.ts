@@ -63,22 +63,6 @@ export const listMonad: ListMonad<number> = {
   }
 }
 
-let x = [4, 5];
-
-let y = (_: any) => {
-  return [
-    4,
-    (_: any) => {
-      return [
-        5,
-        (_: any) => {
-          return [];
-        }
-      ];
-    }
-  ];
-}
-
 export type DelayedVal<T> = [T, Delay<T>] | [];
 export type Delay<T> = (_: any) => DelayedVal<T>;
 
@@ -184,9 +168,42 @@ export const delayMonad: DelayMonad<number> = {
   }
 }
 
-export type Kont<T> = (x: T) => T;
+export type Kont<A, R> = (x: A) => R;
 
-interface KontMonad<T> extends Monad<T> {
+export type KontM<A, R> = (k: Kont<A, R>) => R;
+
+interface KontMonad<A, R> extends Monad<T> {
+  // how is this right?
+  empty: () => KontM<A, R>;
+  unit: (x: A) => KontM<A, R>;
+  map: <B>(f: (a: A) => B) => (m: KontM<A, R>) => KontM<B, R>;
+  join: (m: KontM<KontM<A, R>, R>) => KontM<A, R>;
+  ifEmpty: (xs: KontM<A, R>) => (ys: KontM<A, R>) => (zs: KontM<A, R>) => KontM<A, R>;
+  append: (xs: KontM<A, R>) => (ys: KontM<A, R>) => KontM<A, R>;
+}
+
+type N = number;
+
+export const kontMonad: KontMonad<N, N> = {
+  // FIXME what the hell
+  empty: () => (k: Kont<N, N>) => (l: N) => l,
+  unit: (x: N) => (k: Kont<N, N>) => k(x),
+  map: <B>(f: (a: N) => B) => (m: KontM<N, N>) => {
+    return (k: Kont<B, N>) => {
+      return m((x: N) => k(f(x)));
+    }
+  },
+  join: (m: KontM<KontM<N, N>, N>) => {
+    return (k: Kont<N, N>) => {
+      return m((m1: KontM<N, N>) => m1(k)); 
+    }
+  },
+  // FIXME this is stupid
+  ifEmpty: (xs: KontM<N, N>) => (ys: KontM<N, N>) => (zs: KontM<N, N>) => {
+    return (k: Kont<N, N>) => (l: N) => {
+      xs((_: any) => (_: any) => ys(k)(l))(zs(k)(l));
+    }
+  }
 }
 
 interface DelayMonad<T> extends Monad<T> {
