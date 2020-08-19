@@ -172,7 +172,7 @@ export type Kont<A, R> = (x: A) => R;
 
 export type KontM<A, R> = (k: Kont<A, R>) => R;
 
-interface KontMonad<A, R> extends Monad<T> {
+interface KontMonad<A, R> {
   // how is this right?
   empty: () => KontM<A, R>;
   unit: (x: A) => KontM<A, R>;
@@ -183,11 +183,12 @@ interface KontMonad<A, R> extends Monad<T> {
 }
 
 type N = number;
+type NF = (_: N) => N;
 
-export const kontMonad: KontMonad<N, N> = {
+export const kontMonad: KontMonad<N, NF> = {
   // FIXME what the hell
-  empty: () => (k: Kont<N, N>) => (l: N) => l,
-  unit: (x: N) => (k: Kont<N, N>) => k(x),
+  empty: () => (k: Kont<N, NF>) => (l: N) => l,
+  unit: (x: N) => (k: Kont<N, NF>) => k(x),
   map: <B>(f: (a: N) => B) => (m: KontM<N, N>) => {
     return (k: Kont<B, N>) => {
       return m((x: N) => k(f(x)));
