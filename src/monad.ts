@@ -168,45 +168,6 @@ export const delayMonad: DelayMonad<number> = {
   }
 }
 
-export type Kont<A, R> = (x: A) => R;
-
-export type KontM<A, R> = (k: Kont<A, R>) => R;
-
-interface KontMonad<A, R> {
-  // how is this right?
-  empty: () => KontM<A, R>;
-  unit: (x: A) => KontM<A, R>;
-  map: <B>(f: (a: A) => B) => (m: KontM<A, R>) => KontM<B, R>;
-  join: (m: KontM<KontM<A, R>, R>) => KontM<A, R>;
-  ifEmpty: (xs: KontM<A, R>) => (ys: KontM<A, R>) => (zs: KontM<A, R>) => KontM<A, R>;
-  append: (xs: KontM<A, R>) => (ys: KontM<A, R>) => KontM<A, R>;
-}
-
-type N = number;
-type NF = (_: N) => N;
-
-export const kontMonad: KontMonad<N, NF> = {
-  // FIXME what the hell
-  empty: () => (k: Kont<N, NF>) => (l: N) => l,
-  unit: (x: N) => (k: Kont<N, NF>) => k(x),
-  map: <B>(f: (a: N) => B) => (m: KontM<N, N>) => {
-    return (k: Kont<B, N>) => {
-      return m((x: N) => k(f(x)));
-    }
-  },
-  join: (m: KontM<KontM<N, N>, N>) => {
-    return (k: Kont<N, N>) => {
-      return m((m1: KontM<N, N>) => m1(k)); 
-    }
-  },
-  // FIXME this is stupid
-  ifEmpty: (xs: KontM<N, N>) => (ys: KontM<N, N>) => (zs: KontM<N, N>) => {
-    return (k: Kont<N, N>) => (l: N) => {
-      xs((_: any) => (_: any) => ys(k)(l))(zs(k)(l));
-    }
-  }
-}
-
 interface DelayMonad<T> extends Monad<T> {
   empty: () => EmptyDelay;
   unit: (x: T) => Delay<T>;
