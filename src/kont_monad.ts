@@ -51,9 +51,13 @@ export const kontMonadSeq: KontMonadSeq<number> = {
   },
   append: (xs: NKMonad) => (ys: NKMonad) => {
     return (k: NKont) => {
-      return (l: List<number>) => {
-        return xs(k)(l).concat(ys(k)(l));
-      }
+      return appendHLists(xs(k), ys(k));
     }
+  }
+}
+
+export function appendHLists<T>(h1: HughesList<T>, h2: HughesList<T>) {
+  return (l: List<T>) => {
+    return h1(l).concat(h2(l));
   }
 }
