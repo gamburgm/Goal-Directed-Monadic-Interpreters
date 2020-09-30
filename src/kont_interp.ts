@@ -45,3 +45,30 @@ let leq = (i: number) => (j: number) => (k: NKont) => {
     return (l: List<number>) => l;
   }
 }
+
+console.log((interpret({
+  kind: 'LT',
+  lte: {
+    kind: 'To',
+    from: {
+      kind: 'Int',
+      val: 5,
+    },
+    to: {
+      kind: 'Int',
+      val: 10,
+    },
+  },
+  gte: {
+    kind: 'To',
+    from: {
+      kind: 'Int',
+      val: 5,
+    },
+    to: {
+      kind: 'Int',
+      val: 10,
+    },
+  },
+})((x: number) => (ys: List<number>) => [x].concat(ys)))([]));
+
