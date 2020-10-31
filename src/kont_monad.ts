@@ -35,17 +35,17 @@ export const kontMonad: KontMonadOps = {
 }
 
 interface KontMonadSeq<B> {
-  empty: () => (k: NKont) => HughesList<B>;
+  empty: (k: NKont) => HughesList<B>;
   ifEmpty: (xs: NKMonad) => (ys: NKMonad) => (zs: NKMonad) => NKMonad;
   append: (xs: NKMonad) => (ys: NKMonad) => NKMonad;
 }
 
 export const kontMonadSeq: KontMonadSeq<number> = {
-  empty: () => (k: NKont) => (l: List<number>) => l,
+  empty: (k: NKont) => (l: List<number>) => l,
   ifEmpty: (xs: NKMonad) => (ys: NKMonad) => (zs: NKMonad) => {
     return (k: NKont) => {
       return (l: List<number>) => {
-        return xs((_: number) => (_: List<number>) => ys(k)(l))(zs(k)(l));
+        return xs((_: number) => (_: List<number>) => zs(k)(l))(ys(k)(l));
       }
     }
   },

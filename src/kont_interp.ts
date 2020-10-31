@@ -28,7 +28,7 @@ export function interpret(prog: Program) {
 // could probably create a type for this...
 // the type is number => number => Kont => HughesList,
 // which is equivalent to number => number => monad.
-let to = (i: number) => (j: number) => (k: NKont) => {
+const to = (i: number) => (j: number) => (k: NKont) => {
   if (i > j) {
     return (l: List<number>) => l;
   } else {
@@ -38,7 +38,7 @@ let to = (i: number) => (j: number) => (k: NKont) => {
 
 // the signature information for this function
 // is the same as `to`
-let leq = (i: number) => (j: number) => (k: NKont) => {
+const leq = (i: number) => (j: number) => (k: NKont) => {
   if (i <= j) {
     return k(j);
   } else {
