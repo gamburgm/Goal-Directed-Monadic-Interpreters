@@ -1,8 +1,8 @@
 import { List, Kont, Monad } from './kont_monad';
 
-export type Stream<T>       = () => List<T>;
+export type Stream<T>       = () => (List<T> | Stream<T>);
 export type NStream         = Stream<number>;
-export type HughesStream<T> = (ys: Stream<T>) => List<T>;
+export type HughesStream<T> = (ys: Stream<T>) => (List<T> | Stream<T>);
 export type HSKont<A>       = Kont<A, HughesStream<A>>;
 export type K2Monad<A>      = (k: HSKont<A>) => ReturnType<HSKont<A>>;
 export type N2Kont          = HSKont<number>;

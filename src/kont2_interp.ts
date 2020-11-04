@@ -1,5 +1,5 @@
 import { Program, Int, To, Add, LT, If } from './types';
-import { kontMonad as mops } from './kont_monad';
+import { List, kontMonad as mops } from './kont_monad';
 import { NStream, N2Kont, kont2MonadSeq as mseqs } from './kont2_monad';
 
 export function interpret(prog: Program) {
@@ -19,7 +19,7 @@ export function interpret(prog: Program) {
     }
   } else if (prog.kind === 'If') {
     return (k: N2Kont) => (f: NStream) => {
-      return interpret(prog.cond)((_: any) => (_: any) => interpret(prog.yes)(k)(f))(() => interpret(prog.no)(k)(f));
+      return interpret(prog.cond)((_: any) => (_: any) => interpret(prog.no)(k)(f))(() => interpret(prog.yes)(k)(f));
     }
   }
 }
@@ -30,7 +30,7 @@ const to = (i: number) => (j: number) => {
       if (i > j) {
         return f();
       } else {
-        k(i)(() => to(i + 1)(j)(k)(f));
+        return k(i)(() => to(i + 1)(j)(k)(f));
       }
     }
   }
@@ -47,3 +47,11 @@ const leq = (i: number) => (j: number) => {
     }
   }
 }
+
+console.log((interpret({
+  kind: 'If',
+  cond: { kind: 'To', from: { kind: 'Int', val: 10 }, to: { kind: 'Int', val: 3 } },
+  yes: { kind: 'Int', val: 1 },
+  no: { kind: 'Int', val: 2 },
+})((x: number) => (ys: () => List<number>) => [x].concat(ys())))(() => []));
+
